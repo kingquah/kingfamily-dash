@@ -1,0 +1,218 @@
+/* King Family Dash — mobile styles (matches the live dashboard layout) */
+
+.bottom-tab-bar {
+    display: none
+}
+
+html {
+    -webkit-text-size-adjust: 100%
+}
+
+* {
+    -webkit-tap-highlight-color: transparent
+}
+
+button {
+    touch-action: manipulation;
+    cursor: pointer
+}
+
+input,
+textarea,
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    font-size: max(16px, 1em);
+    border-radius: 0
+}
+
+@media (max-width: 768px) {
+    * {
+        box-sizing: border-box
+    }
+
+    .top-header {
+        padding: 0 14px !important;
+        height: 54px !important
+    }
+
+    .top-nav,
+    .header-user-name,
+    .header-user-title {
+        display: none !important
+    }
+
+    .main-content {
+        padding: 16px 14px 82px !important
+    }
+
+    .bottom-tab-bar {
+        display: -webkit-flex;
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border-top: 2px solid #f0ebe4;
+        padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+        z-index: 200;
+        -webkit-justify-content: space-around;
+        justify-content: space-around;
+        -webkit-align-items: center;
+        align-items: center
+    }
+
+    .bottom-tab-btn {
+        display: -webkit-flex;
+        display: flex;
+        -webkit-flex-direction: column;
+        flex-direction: column;
+        -webkit-align-items: center;
+        align-items: center;
+        -webkit-justify-content: center;
+        justify-content: center;
+        gap: 3px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 6px 8px;
+        min-width: 48px;
+        min-height: 52px;
+        font-family: Georgia, serif;
+        border-radius: 12px;
+        transition: background .15s;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent
+    }
+
+    .bottom-tab-btn.active {
+        background: #EDE4F8
+    }
+
+    .bottom-tab-icon {
+        font-size: 20px;
+        line-height: 1
+    }
+
+    .bottom-tab-label {
+        font-size: 10px;
+        font-weight: 600;
+        color: #9a8a7a;
+        letter-spacing: .2px
+    }
+
+    .bottom-tab-btn.active .bottom-tab-label {
+        color: #6B3FA0
+    }
+
+    .login-card {
+        width: calc(100% - 32px) !important;
+        max-width: 400px !important;
+        padding: 36px 24px !important;
+        min-width: 0 !important
+    }
+
+    .cards-grid {
+        grid-template-columns: 1fr !important
+    }
+
+    .pending-item {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important
+    }
+
+    .leave-balance-row {
+        flex-wrap: wrap !important
+    }
+
+    .leave-form {
+        max-width: 100% !important;
+        padding: 20px 16px !important
+    }
+
+    .date-grid {
+        grid-template-columns: 1fr !important
+    }
+
+    .leave-card {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 10px !important
+    }
+
+    .leave-card-actions {
+        display: flex !important;
+        gap: 8px !important;
+        width: 100% !important;
+        flex-wrap: wrap !important
+    }
+
+    .leave-card-actions>button {
+        flex: 1 !important;
+        padding: 10px 8px !important;
+        font-size: 13px !important;
+        min-height: 44px !important;
+        min-width: 80px !important
+    }
+
+    .checklist-layout {
+        grid-template-columns: 1fr !important
+    }
+
+    .score-card-sticky {
+        position: static !important;
+        top: auto !important;
+        margin-bottom: 16px !important;
+        order: -1
+    }
+
+    .checklist-item {
+        padding: 12px 8px !important;
+        min-height: 44px !important;
+        align-items: center !important
+    }
+
+    .check-box {
+        width: 24px !important;
+        height: 24px !important;
+        min-width: 24px !important;
+        border-radius: 6px !important
+    }
+
+    .table-scroll {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch
+    }
+
+    .table-scroll table {
+        min-width: 520px
+    }
+
+    .sales-chart {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch
+    }
+
+    .sales-chart-inner {
+        min-width: 580px
+    }
+
+    .docs-grid {
+        grid-template-columns: 1fr !important
+    }
+
+    .admin-stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important
+    }
+
+    h1 {
+        font-size: 22px !important
+    }
+
+    h2 {
+        font-size: 18px !important
+    }
+}
