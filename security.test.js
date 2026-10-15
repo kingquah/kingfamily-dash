@@ -125,6 +125,8 @@ test("role matrix: anon has no policy and staff cannot read budget or admin writ
 test("audit names and sale owners are forced in the database", () => {
   assert.match(active, /new\.user_name := coalesce\(uname, 'Unknown'\)/);
   assert.match(active, /new\.user_id := old\.user_id/);
+  const tgOps = [...active.matchAll(/tg_op\s*=\s*'([^']+)'/g)].map((match) => match[1]);
+  assert.deepEqual(tgOps, ["UPDATE", "INSERT", "UPDATE"]);
   assert.match(active, /Only an admin can create or promote an admin/);
   assert.match(active, /if auth\.uid\(\) is null then/);
   assert.match(active, /before insert on public\.kf_budget_audit/);
