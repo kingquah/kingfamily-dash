@@ -1,4 +1,4 @@
-# King Family Dash
+# Pulse Dashboard
 
 Vite + React dashboard. Same tabs and purple look as before: Dashboard, Budget, Scoreboard, Leave, Checklist, Kanban, and Documents. Admin is a gear for the admin role only. It uses the shared Supabase project, but only the `kf_` tables.
 

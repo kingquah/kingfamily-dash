@@ -1,4 +1,4 @@
-# King Family Dash
+# Pulse Dashboard
 
 Family dashboard (dashboard, budget, scoreboard, leave, checklist, kanban, documents, admin) with a royal purple theme.
 

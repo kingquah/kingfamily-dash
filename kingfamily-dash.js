@@ -1,4 +1,4 @@
-// King Family Dash application.
+// Pulse Dashboard application.
 // Rebound to kf_* Supabase objects so it never reads or writes the original tables.
 import React from "react";
 import { jsx, jsxs, Fragment } from "react/jsx-runtime";
@@ -334,7 +334,7 @@ function W3() {
               color: "#6B3FA0",
               marginBottom: 4,
             },
-            children: "KING FAMILY",
+            children: "PULSE DASHBOARD",
           }),
           f.jsx("div", {
             style: { fontSize: 13, color: "#9a8a7a" },
@@ -472,7 +472,7 @@ function $3({
       ]);
     const book = Ec.book_new();
     Ec.book_append_sheet(book, Ec.aoa_to_sheet(rows), "Scoreboard");
-    k3(book, "KingFamilyScoreboard.xlsx");
+    k3(book, "PulseDashboardScoreboard.xlsx");
   }
   async function be(W) {
     if ((W.preventDefault(), !D.trim() || !Q)) return;
@@ -2747,7 +2747,7 @@ function J3() {
                   color: "#6B3FA0",
                   letterSpacing: "-0.5px",
                 },
-                children: "KING",
+                children: "PULSE",
               }),
               f.jsx("span", {
                 style: {
@@ -2756,20 +2756,7 @@ function J3() {
                   color: "#5a4a3a",
                   letterSpacing: "-0.5px",
                 },
-                children: "FAMILY",
-              }),
-              f.jsx("span", {
-                style: {
-                  background: "#EDE4F8",
-                  color: "#6B3FA0",
-                  fontSize: 11,
-                  fontWeight: 700,
-                  padding: "2px 8px",
-                  borderRadius: 99,
-                  marginLeft: 4,
-                  letterSpacing: 1,
-                },
-                children: "DASH",
+                children: "DASHBOARD",
               }),
             ],
           }),
@@ -3023,7 +3010,7 @@ function Q3({ notice, onSignedIn }) {
             }),
             f.jsx("div", {
               style: { fontSize: 26, fontWeight: 800, color: "#6B3FA0" },
-              children: "KING FAMILY",
+              children: "PULSE DASHBOARD",
             }),
             f.jsx("div", {
               style: { fontSize: 13, color: "#9a8a7a", marginTop: 4 },
@@ -6956,7 +6943,7 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
         ...kt.map((Fe) => `${Fe}-${String(i).slice(2)}`),
         "Total",
       ],
-      we = [[`King Family Budget ${i}`], [], ge];
+      we = [[`Pulse Dashboard Budget ${i}`], [], ge];
     for (const Fe of J) {
       if (Fe.kind === "group" || Fe.kind === "sub") {
         we.push([Fe.label]);
@@ -6992,7 +6979,7 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
     ];
     const Me = Ec.book_new();
     (Ec.book_append_sheet(Me, Oe, `Budget ${i}`),
-      k3(Me, `KingFamilyBudget_${i}.xlsx`));
+      k3(Me, `PulseDashboardBudget_${i}.xlsx`));
   }
   if (m || v)
     return f.jsx("div", {
@@ -7075,7 +7062,7 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
               color: "#3a2a1a",
               margin: 0,
             },
-            children: ["📒 King Family Budget ", i],
+            children: ["📒 Pulse Dashboard Budget ", i],
           }),
           f.jsxs("div", {
             style: {

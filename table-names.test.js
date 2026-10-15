@@ -61,11 +61,11 @@ test("schema does not touch the original tables", () => {
   assert.doesNotMatch(schemaSql, /grant all on table public\.kf_/i);
 });
 
-test("King Family branding and purple theme", () => {
-  assert.match(html, /<title>King Family Dash<\/title>/);
+test("Pulse Dashboard branding and purple theme", () => {
+  assert.match(html, /<title>Pulse Dashboard<\/title>/);
   assert.match(pkg, /"name": "kingfamily-dash"/);
-  assert.match(setup, /King Family Dash/);
-  assert.match(app, /KING FAMILY/);
+  assert.match(setup, /Pulse Dashboard/);
+  assert.match(app, /PULSE DASHBOARD/);
   assert.match(app, /#6B3FA0/);
   assert.doesNotMatch(app, /#4a70c4/i);
   assert.doesNotMatch(css, /#4a70c4/i);
