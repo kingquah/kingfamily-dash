@@ -1,4 +1,4 @@
-// King Family Dash — budget line structure.
+// Pulse Dashboard — budget line structure.
 // Monthly amounts here are zero. The lived-in case-study figures are loaded
 // by supabase/kingfamily_seed.sql. If the budget table is still empty when an
 // editor opens the page, the app inserts these zero rows as a blank sheet.

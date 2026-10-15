@@ -150,7 +150,7 @@ test("the app signs in with Supabase Auth and does not ship the old shortcuts", 
   assert.doesNotMatch(app, /SERVICE_ROLE/);
   assert.doesNotMatch(app, /service_role/);
   assert.match(app, /Closed sales, minus costs, depreciation, loan payments, and tax installments\./);
-  assert.match(app, /KingFamilyScoreboard\.xlsx/);
+  assert.match(app, /PulseDashboardScoreboard\.xlsx/);
   assert.match(app, /Own store/);
   assert.match(app, /TikTok Shop/);
   assert.match(app, /Unspecified/);
