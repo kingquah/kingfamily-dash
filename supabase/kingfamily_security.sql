@@ -113,7 +113,7 @@ security definer
 set search_path = public
 as $$
 begin
-  if tg_op = 'update' then
+  if tg_op = 'UPDATE' then
     new.user_id := old.user_id;
   end if;
   return new;
