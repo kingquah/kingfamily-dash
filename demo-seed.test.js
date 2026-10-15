@@ -51,9 +51,9 @@ test("seed only writes kf_ tables and is re-runnable", () => {
   assert.doesNotMatch(sql, /saltycustoms|puteri|quah/i);
 });
 
-test("demo logins use the plain-text password the app expects", () => {
+test("seed creates King and does not store a password", () => {
   for (const email of [
-    "adrian.king@kingfamily.demo",
+    "king@kingfamily.demo",
     "mira.king@kingfamily.demo",
     "leo.king@kingfamily.demo",
     "sable.king@kingfamily.demo",
@@ -61,7 +61,9 @@ test("demo logins use the plain-text password the app expects", () => {
   ]) {
     assert.match(sql, new RegExp(email));
   }
-  assert.match(sql, /'kingdemo'/);
+  assert.match(sql, /'King'/);
+  assert.doesNotMatch(sql, /adrian/i);
+  assert.doesNotMatch(active, /\bpassword\b/i);
 });
 
 test("Net Profit (Actual YTD) is RM 1,186,400", () => {

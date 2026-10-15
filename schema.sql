@@ -1,20 +1,24 @@
 -- King Family Dash — idempotent schema
 -- Apply this entire file in the Supabase SQL editor on the shared project.
 --
--- It only creates kf_* tables, indexes, policies, grants, and sequences.
--- It does not alter, drop, or rewrite any existing object.
+-- It only creates kf_* tables, indexes, and missing columns.
+-- It does not drop tables or rewrite existing rows.
 -- Safe to run more than once.
+--
+-- Logins, row access, and removal of the plain-text password column are in
+-- supabase/kingfamily_security.sql. Run that file after this one, before
+-- deploying the app. Do not grant the anon key access to these tables.
 
 -- 1. USERS
 create table if not exists public.kf_users (
   id          serial primary key,
   name        text not null,
   email       text not null unique,
-  password    text not null,
   role        text not null check (role = any (array['admin'::text, 'supervisor'::text, 'staff'::text])),
   job_title   text,
   avatar      text,
-  annual_left integer not null default 12
+  annual_left integer not null default 12,
+  auth_id     uuid
 );
 
 -- 2. LEAVE REQUESTS
@@ -61,7 +65,9 @@ create table if not exists public.kf_sales_entries (
   category    text not null check (category = any (array['sales_closed'::text, 'pipeline'::text, 'invoice'::text, 'quotation'::text])),
   client_name text not null,
   amount      numeric not null default 0,
-  entry_date  date not null
+  entry_date  date not null,
+  channel     text,
+  country     text
 );
 
 create index if not exists kf_sales_entries_date_idx
@@ -136,8 +142,13 @@ create table if not exists public.kf_kanban_audit (
 create index if not exists kf_kanban_audit_created_idx
   on public.kf_kanban_audit (created_at desc);
 
--- RLS, policies, and grants. Matches the live originals:
--- row level security on, full access for the anon and authenticated roles.
+-- Columns added after the first release. Safe on an existing database.
+alter table public.kf_users add column if not exists auth_id uuid;
+alter table public.kf_sales_entries add column if not exists channel text;
+alter table public.kf_sales_entries add column if not exists country text;
+
+-- Turn protection on, but do not open the tables to the public anon key.
+-- supabase/kingfamily_security.sql installs the role policies and grants.
 do $$
 declare
   t text;
@@ -157,20 +168,8 @@ begin
   ]
   loop
     execute format('alter table public.%I enable row level security', t);
-    execute format('drop policy if exists anon_full_access on public.%I', t);
-    execute format(
-      'create policy anon_full_access on public.%I for all to anon, authenticated using (true) with check (true)',
-      t
-    );
-    execute format(
-      'grant all on table public.%I to anon, authenticated, service_role',
-      t
-    );
   end loop;
 end $$;
-
-grant usage, select, update on sequence public.kf_users_id_seq to anon, authenticated, service_role;
-grant usage, select, update on sequence public.kf_sales_targets_id_seq to anon, authenticated, service_role;
 
 -- Empty placeholders so the app can open before the demo seed.
 -- supabase/kingfamily_seed.sql replaces the 2026 targets, the kanban board,

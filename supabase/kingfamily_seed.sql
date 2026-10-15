@@ -3,10 +3,10 @@
 -- Run AFTER schema.sql, in the Supabase SQL editor.
 -- Inserts and updates kf_* tables only. Safe to re-run.
 --
--- Demo password for every account (stored in plain text, which is
--- how this dashboard checks logins): kingdemo
+-- Sign-in is Supabase Auth. supabase/kingfamily_security.sql creates
+-- each of these people an auth account with the temporary password kingdemo.
 --
---   adrian.king@kingfamily.demo   admin        Founder
+--   king@kingfamily.demo          admin        Founder
 --   mira.king@kingfamily.demo     supervisor   Household director
 --   leo.king@kingfamily.demo      staff        Studio lead
 --   sable.king@kingfamily.demo    staff        Client partner
@@ -22,15 +22,14 @@
 
 begin;
 
-insert into public.kf_users (name, email, password, role, job_title, avatar, annual_left) values
-  ('Adrian King', 'adrian.king@kingfamily.demo', 'kingdemo', 'admin', 'Founder', 'AK', 8),
-  ('Mira King', 'mira.king@kingfamily.demo', 'kingdemo', 'supervisor', 'Household Director', 'MK', 9),
-  ('Leo King', 'leo.king@kingfamily.demo', 'kingdemo', 'staff', 'Studio Lead', 'LK', 10),
-  ('Sable King', 'sable.king@kingfamily.demo', 'kingdemo', 'staff', 'Client Partner', 'SK', 7),
-  ('Nora King', 'nora.king@kingfamily.demo', 'kingdemo', 'staff', 'Bookkeeper', 'NK', 12)
+insert into public.kf_users (name, email, role, job_title, avatar, annual_left) values
+  ('King', 'king@kingfamily.demo', 'admin', 'Founder', 'K', 8),
+  ('Mira King', 'mira.king@kingfamily.demo', 'supervisor', 'Household Director', 'MK', 9),
+  ('Leo King', 'leo.king@kingfamily.demo', 'staff', 'Studio Lead', 'LK', 10),
+  ('Sable King', 'sable.king@kingfamily.demo', 'staff', 'Client Partner', 'SK', 7),
+  ('Nora King', 'nora.king@kingfamily.demo', 'staff', 'Bookkeeper', 'NK', 12)
 on conflict (email) do update set
   name = excluded.name,
-  password = excluded.password,
   role = excluded.role,
   job_title = excluded.job_title,
   avatar = excluded.avatar,
@@ -44,7 +43,7 @@ select setval(
 insert into public.kf_leave_requests (id, user_id, type, from_date, to_date, days, reason, status)
 select v.id, u.id, v.type, v.from_date, v.to_date, v.days, v.reason, v.status
 from (values
-  ('a1111111-1111-4111-8111-000000000001'::uuid, 'adrian.king@kingfamily.demo', 'Annual', '2026-08-11'::date, '2026-08-14'::date, 4, 'Coast trip with the cousins', 'Approved'),
+  ('a1111111-1111-4111-8111-000000000001'::uuid, 'king@kingfamily.demo', 'Annual', '2026-08-11'::date, '2026-08-14'::date, 4, 'Coast trip with the cousins', 'Approved'),
   ('a1111111-1111-4111-8111-000000000002'::uuid, 'mira.king@kingfamily.demo', 'Annual', '2026-02-16'::date, '2026-02-18'::date, 3, 'Family long weekend', 'Approved'),
   ('a1111111-1111-4111-8111-000000000003'::uuid, 'leo.king@kingfamily.demo', 'Annual', '2026-01-12'::date, '2026-01-13'::date, 2, 'Moving day', 'Approved'),
   ('a1111111-1111-4111-8111-000000000004'::uuid, 'leo.king@kingfamily.demo', 'Sick', '2026-10-02'::date, '2026-10-03'::date, 2, 'Flu — working from the spare room', 'Pending'),
@@ -65,8 +64,8 @@ on conflict (id) do update set
 insert into public.kf_checklist_submissions (id, user_id, month_key, checks, remarks, director_score)
 select v.id, u.id, v.month_key, v.checks, v.remarks, v.director_score
 from (values
-  ('b2222222-2222-4222-8222-000000000001'::uuid, 'adrian.king@kingfamily.demo', '2026-08', '{"r1":true,"r2":true,"r3":false,"p1":true,"p2":true,"p3":true,"p4":true,"p5":true,"w1":true,"w2":false,"w3":true,"wi1":true,"wi2":true,"wi3":true,"pm1":true,"pm2":true,"pm3":false,"pm4":true}'::jsonb, 'Quiet month. Portrait brief slipped a day.', 3),
-  ('b2222222-2222-4222-8222-000000000002'::uuid, 'adrian.king@kingfamily.demo', '2026-09', '{"r1":true,"r2":true,"r3":false,"p1":true,"p2":true,"p3":true,"p4":true,"p5":true,"w1":true,"w2":false,"w3":true,"wi1":true,"wi2":true,"wi3":true,"pm1":true,"pm2":true,"pm3":false,"pm4":true}'::jsonb, 'Caught up. Client reviews were on time.', 9),
+  ('b2222222-2222-4222-8222-000000000001'::uuid, 'king@kingfamily.demo', '2026-08', '{"r1":true,"r2":true,"r3":false,"p1":true,"p2":true,"p3":true,"p4":true,"p5":true,"w1":true,"w2":false,"w3":true,"wi1":true,"wi2":true,"wi3":true,"pm1":true,"pm2":true,"pm3":false,"pm4":true}'::jsonb, 'Quiet month. Portrait brief slipped a day.', 3),
+  ('b2222222-2222-4222-8222-000000000002'::uuid, 'king@kingfamily.demo', '2026-09', '{"r1":true,"r2":true,"r3":false,"p1":true,"p2":true,"p3":true,"p4":true,"p5":true,"w1":true,"w2":false,"w3":true,"wi1":true,"wi2":true,"wi3":true,"pm1":true,"pm2":true,"pm3":false,"pm4":true}'::jsonb, 'Caught up. Client reviews were on time.', 9),
   ('b2222222-2222-4222-8222-000000000003'::uuid, 'mira.king@kingfamily.demo', '2026-09', '{"r1":true,"r2":true,"r3":true,"p1":true,"p2":false,"p3":true,"p4":true,"p5":true,"w1":true,"w2":true,"w3":true,"wi1":false,"wi2":true,"wi3":true,"pm1":true,"pm2":true,"pm3":true,"pm4":true}'::jsonb, 'Household calendar and studio handoff both held.', 8),
   ('b2222222-2222-4222-8222-000000000004'::uuid, 'mira.king@kingfamily.demo', '2026-10', '{"r1":true,"r2":true,"r3":true,"p1":true,"p2":true,"p3":true,"p4":false,"p5":true,"w1":true,"w2":true,"w3":true,"wi1":true,"wi2":true,"wi3":false,"pm1":true,"pm2":true,"pm3":true,"pm4":true}'::jsonb, 'October is still open. Two calls ran long.', 7),
   ('b2222222-2222-4222-8222-000000000005'::uuid, 'leo.king@kingfamily.demo', '2026-09', '{"r1":true,"r2":false,"r3":true,"p1":true,"p2":true,"p3":true,"p4":true,"p5":true,"w1":false,"w2":true,"w3":true,"wi1":true,"wi2":true,"wi3":true,"pm1":true,"pm2":false,"pm3":true,"pm4":true}'::jsonb, 'Delivery days were clean. One late pre-read.', 8),
@@ -106,34 +105,34 @@ select v.id, u.id, v.category, v.client_name, v.amount, v.entry_date
 from (values
   ('c3333333-3333-4333-8333-000000000100'::uuid, 'sable.king@kingfamily.demo', 'sales_closed', 'Hartwell & Co', 61170::numeric, '2026-01-12'::date),
   ('c3333333-3333-4333-8333-000000000101'::uuid, 'leo.king@kingfamily.demo', 'sales_closed', 'Northglass Studio', 61170::numeric, '2026-01-18'::date),
-  ('c3333333-3333-4333-8333-000000000102'::uuid, 'adrian.king@kingfamily.demo', 'sales_closed', 'Pinenook Goods', 61171::numeric, '2026-01-24'::date),
+  ('c3333333-3333-4333-8333-000000000102'::uuid, 'king@kingfamily.demo', 'sales_closed', 'Pinenook Goods', 61171::numeric, '2026-01-24'::date),
   ('c3333333-3333-4333-8333-000000000103'::uuid, 'sable.king@kingfamily.demo', 'sales_closed', 'Lumen & Birch', 98637::numeric, '2026-02-12'::date),
   ('c3333333-3333-4333-8333-000000000104'::uuid, 'leo.king@kingfamily.demo', 'sales_closed', 'Oaklane Hospitality', 98638::numeric, '2026-02-18'::date),
   ('c3333333-3333-4333-8333-000000000105'::uuid, 'sable.king@kingfamily.demo', 'sales_closed', 'Marlowe Press', 69581::numeric, '2026-03-12'::date),
   ('c3333333-3333-4333-8333-000000000106'::uuid, 'leo.king@kingfamily.demo', 'sales_closed', 'Vesper Clinic', 69581::numeric, '2026-03-18'::date),
-  ('c3333333-3333-4333-8333-000000000107'::uuid, 'adrian.king@kingfamily.demo', 'sales_closed', 'Fieldnote Apparel', 69582::numeric, '2026-03-24'::date),
+  ('c3333333-3333-4333-8333-000000000107'::uuid, 'king@kingfamily.demo', 'sales_closed', 'Fieldnote Apparel', 69582::numeric, '2026-03-24'::date),
   ('c3333333-3333-4333-8333-000000000108'::uuid, 'sable.king@kingfamily.demo', 'sales_closed', 'Cinder & Co', 73404::numeric, '2026-04-12'::date),
   ('c3333333-3333-4333-8333-000000000109'::uuid, 'leo.king@kingfamily.demo', 'sales_closed', 'Brightwharf School', 73404::numeric, '2026-04-18'::date),
-  ('c3333333-3333-4333-8333-000000000110'::uuid, 'adrian.king@kingfamily.demo', 'sales_closed', 'Hartwell & Co', 73406::numeric, '2026-04-24'::date),
+  ('c3333333-3333-4333-8333-000000000110'::uuid, 'king@kingfamily.demo', 'sales_closed', 'Hartwell & Co', 73406::numeric, '2026-04-24'::date),
   ('c3333333-3333-4333-8333-000000000111'::uuid, 'sable.king@kingfamily.demo', 'sales_closed', 'Northglass Studio', 116988::numeric, '2026-05-12'::date),
   ('c3333333-3333-4333-8333-000000000112'::uuid, 'leo.king@kingfamily.demo', 'sales_closed', 'Pinenook Goods', 116989::numeric, '2026-05-18'::date),
   ('c3333333-3333-4333-8333-000000000113'::uuid, 'sable.king@kingfamily.demo', 'sales_closed', 'Lumen & Birch', 71875::numeric, '2026-06-12'::date),
   ('c3333333-3333-4333-8333-000000000114'::uuid, 'leo.king@kingfamily.demo', 'sales_closed', 'Oaklane Hospitality', 71875::numeric, '2026-06-18'::date),
-  ('c3333333-3333-4333-8333-000000000115'::uuid, 'adrian.king@kingfamily.demo', 'sales_closed', 'Marlowe Press', 71876::numeric, '2026-06-24'::date),
+  ('c3333333-3333-4333-8333-000000000115'::uuid, 'king@kingfamily.demo', 'sales_closed', 'Marlowe Press', 71876::numeric, '2026-06-24'::date),
   ('c3333333-3333-4333-8333-000000000116'::uuid, 'sable.king@kingfamily.demo', 'sales_closed', 'Vesper Clinic', 123870::numeric, '2026-07-12'::date),
   ('c3333333-3333-4333-8333-000000000117'::uuid, 'leo.king@kingfamily.demo', 'sales_closed', 'Fieldnote Apparel', 123870::numeric, '2026-07-18'::date),
   ('c3333333-3333-4333-8333-000000000118'::uuid, 'sable.king@kingfamily.demo', 'sales_closed', 'Cinder & Co', 79521::numeric, '2026-08-12'::date),
   ('c3333333-3333-4333-8333-000000000119'::uuid, 'leo.king@kingfamily.demo', 'sales_closed', 'Brightwharf School', 79521::numeric, '2026-08-18'::date),
-  ('c3333333-3333-4333-8333-000000000120'::uuid, 'adrian.king@kingfamily.demo', 'sales_closed', 'Northglass Studio', 79523::numeric, '2026-08-24'::date),
+  ('c3333333-3333-4333-8333-000000000120'::uuid, 'king@kingfamily.demo', 'sales_closed', 'Northglass Studio', 79523::numeric, '2026-08-24'::date),
   ('c3333333-3333-4333-8333-000000000121'::uuid, 'sable.king@kingfamily.demo', 'sales_closed', 'Pinenook Goods', 85638::numeric, '2026-09-12'::date),
   ('c3333333-3333-4333-8333-000000000122'::uuid, 'leo.king@kingfamily.demo', 'sales_closed', 'Hartwell & Co', 85638::numeric, '2026-09-18'::date),
-  ('c3333333-3333-4333-8333-000000000123'::uuid, 'adrian.king@kingfamily.demo', 'sales_closed', 'Lumen & Birch', 85640::numeric, '2026-09-24'::date),
+  ('c3333333-3333-4333-8333-000000000123'::uuid, 'king@kingfamily.demo', 'sales_closed', 'Lumen & Birch', 85640::numeric, '2026-09-24'::date),
   ('c3333333-3333-4333-8333-000000000124'::uuid, 'sable.king@kingfamily.demo', 'sales_closed', 'Oaklane Hospitality', 133046::numeric, '2026-10-02'::date),
   ('c3333333-3333-4333-8333-000000000125'::uuid, 'leo.king@kingfamily.demo', 'sales_closed', 'Marlowe Press', 133046::numeric, '2026-10-03'::date),
   ('c3333333-3333-4333-8333-000000000001'::uuid, 'sable.king@kingfamily.demo', 'pipeline', 'Hartwell & Co — winter catalogue', 64000::numeric, '2026-10-02'::date),
   ('c3333333-3333-4333-8333-000000000002'::uuid, 'leo.king@kingfamily.demo', 'pipeline', 'Brightwharf School — spring fair', 28000::numeric, '2026-10-03'::date),
   ('c3333333-3333-4333-8333-000000000003'::uuid, 'sable.king@kingfamily.demo', 'invoice', 'Lumen & Birch — September retainer', 18500::numeric, '2026-10-02'::date),
-  ('c3333333-3333-4333-8333-000000000004'::uuid, 'adrian.king@kingfamily.demo', 'quotation', 'Oaklane Hospitality — lobby refresh', 96000::numeric, '2026-10-05'::date),
+  ('c3333333-3333-4333-8333-000000000004'::uuid, 'king@kingfamily.demo', 'quotation', 'Oaklane Hospitality — lobby refresh', 96000::numeric, '2026-10-05'::date),
   ('c3333333-3333-4333-8333-000000000005'::uuid, 'sable.king@kingfamily.demo', 'quotation', 'Fieldnote Apparel — lookbook', 41000::numeric, '2026-09-16'::date),
   ('c3333333-3333-4333-8333-000000000006'::uuid, 'leo.king@kingfamily.demo', 'invoice', 'Vesper Clinic — wayfinding set', 22300::numeric, '2026-08-19'::date),
   ('c3333333-3333-4333-8333-000000000007'::uuid, 'mira.king@kingfamily.demo', 'pipeline', 'Pinenook Goods — gift edit', 17500::numeric, '2026-07-14'::date),
@@ -288,9 +287,9 @@ insert into public.kf_budget_audit (id, line_key, year, month, field, old_value,
 select v.id, v.line_key, v.year, v.month, v.field, v.old_value, v.new_value, u.id, v.user_name, v.created_at
 from (values
   ('d4444444-4444-4444-8444-000000000001'::uuid, 'rental', 2026, 'Oct', 'actual', '3400', '3600', 'nora.king@kingfamily.demo', 'Nora King', '2026-10-03 09:10:00+08'::timestamptz),
-  ('d4444444-4444-4444-8444-000000000002'::uuid, 'ads_spend', 2026, null, 'budget', '4000', '4200', 'adrian.king@kingfamily.demo', 'Adrian King', '2026-09-02 11:20:00+08'::timestamptz),
+  ('d4444444-4444-4444-8444-000000000002'::uuid, 'ads_spend', 2026, null, 'budget', '4000', '4200', 'king@kingfamily.demo', 'King', '2026-09-02 11:20:00+08'::timestamptz),
   ('d4444444-4444-4444-8444-000000000003'::uuid, '__month__', 2026, 'Sep', 'month_status', 'unchecked', 'checked', 'mira.king@kingfamily.demo', 'Mira King', '2026-10-01 16:05:00+08'::timestamptz),
-  ('d4444444-4444-4444-8444-000000000004'::uuid, 'payroll_my', 2026, null, 'visibility', 'true', 'false', 'adrian.king@kingfamily.demo', 'Adrian King', '2026-03-04 10:00:00+08'::timestamptz),
+  ('d4444444-4444-4444-8444-000000000004'::uuid, 'payroll_my', 2026, null, 'visibility', 'true', 'false', 'king@kingfamily.demo', 'King', '2026-03-04 10:00:00+08'::timestamptz),
   ('d4444444-4444-4444-8444-000000000005'::uuid, 'digital_mkt', 2026, 'Aug', 'actual', '2800', '3200', 'sable.king@kingfamily.demo', 'Sable King', '2026-08-28 15:40:00+08'::timestamptz),
   ('d4444444-4444-4444-8444-000000000006'::uuid, 'total_cogs', 2026, 'Jul', 'actual', '54000', '57200', 'nora.king@kingfamily.demo', 'Nora King', '2026-08-02 09:25:00+08'::timestamptz),
   ('d4444444-4444-4444-8444-000000000007'::uuid, 'company_trip', 2026, 'Aug', 'actual', '0', '8500', 'mira.king@kingfamily.demo', 'Mira King', '2026-08-20 13:15:00+08'::timestamptz)
@@ -323,7 +322,7 @@ from (values
   ('e5555555-5555-4555-8555-000000000002'::uuid, 'added card "October client reconciliations" to To Do', 'nora.king@kingfamily.demo', 'Nora King', '2026-10-01 09:00:00+08'::timestamptz),
   ('e5555555-5555-4555-8555-000000000003'::uuid, 'moved "October client reconciliations" from To Do to In Progress', 'nora.king@kingfamily.demo', 'Nora King', '2026-10-02 11:30:00+08'::timestamptz),
   ('e5555555-5555-4555-8555-000000000004'::uuid, 'moved "Close the September books" from In Progress to Done', 'nora.king@kingfamily.demo', 'Nora King', '2026-10-03 16:10:00+08'::timestamptz),
-  ('e5555555-5555-4555-8555-000000000005'::uuid, 'added a new list', 'adrian.king@kingfamily.demo', 'Adrian King', '2026-06-02 14:00:00+08'::timestamptz),
+  ('e5555555-5555-4555-8555-000000000005'::uuid, 'added a new list', 'king@kingfamily.demo', 'King', '2026-06-02 14:00:00+08'::timestamptz),
   ('e5555555-5555-4555-8555-000000000006'::uuid, 'renamed list "Blocked" → "Waiting"', 'leo.king@kingfamily.demo', 'Leo King', '2026-07-08 09:40:00+08'::timestamptz),
   ('e5555555-5555-4555-8555-000000000007'::uuid, 'added card "Hartwell & Co contract signature" to Waiting', 'sable.king@kingfamily.demo', 'Sable King', '2026-10-04 15:20:00+08'::timestamptz)
 ) as v(id, detail, email, user_name, created_at)

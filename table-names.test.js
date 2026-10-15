@@ -38,11 +38,12 @@ test("app queries only kf_ tables", () => {
   assert.match(app, /\.from\("kf_kanban_audit"\)/);
 });
 
-test("embedded SQL uses kf_ names", () => {
+test("embedded SQL uses kf_ names and does not tell editors to turn protection off", () => {
   assert.doesNotMatch(app, /alter table budget_lines\b/);
   assert.doesNotMatch(app, /create table if not exists kanban_board\b/);
+  assert.doesNotMatch(app, /disable row level security/i);
+  assert.doesNotMatch(app, /anon_full_access/);
   assert.match(app, /alter table kf_budget_lines\b/);
-  assert.match(app, /create table if not exists kf_kanban_board\b/);
 });
 
 test("schema does not touch the original tables", () => {
@@ -55,7 +56,9 @@ test("schema does not touch the original tables", () => {
     );
   }
   assert.match(schemaSql, /public\.kf_users/);
-  assert.match(schemaSql, /anon_full_access/);
+  assert.match(schemaSql, /enable row level security/);
+  assert.doesNotMatch(schemaSql, /anon_full_access/);
+  assert.doesNotMatch(schemaSql, /grant all on table public\.kf_/i);
 });
 
 test("King Family branding and purple theme", () => {

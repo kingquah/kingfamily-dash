@@ -58,10 +58,12 @@ select {
         border-top: 2px solid #f0ebe4;
         padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
         z-index: 200;
-        -webkit-justify-content: space-around;
-        justify-content: space-around;
+        -webkit-justify-content: flex-start;
+        justify-content: flex-start;
         -webkit-align-items: center;
-        align-items: center
+        align-items: center;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch
     }
 
     .bottom-tab-btn {
@@ -77,8 +79,9 @@ select {
         background: none;
         border: none;
         cursor: pointer;
-        padding: 6px 8px;
-        min-width: 48px;
+        padding: 6px 4px;
+        min-width: 56px;
+        flex: 0 0 auto;
         min-height: 52px;
         font-family: Georgia, serif;
         border-radius: 12px;
@@ -97,7 +100,7 @@ select {
     }
 
     .bottom-tab-label {
-        font-size: 10px;
+        font-size: 9px;
         font-weight: 600;
         color: #9a8a7a;
         letter-spacing: .2px

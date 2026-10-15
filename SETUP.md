@@ -1,61 +1,70 @@
 # King Family Dash
 
-Vite + React dashboard. Same tabs as the existing family dashboard (Dashboard, Leave, Integrity checklist, Sales, Budget, Documents, Scoreboard, Kanban, Admin), in a royal purple theme. It uses the shared Supabase project, but only the `kf_` tables created by `schema.sql`.
+Vite + React dashboard. Same tabs and purple look as before: Dashboard, Budget, Scoreboard, Leave, Checklist, Kanban, and Documents. Admin is a gear for the admin role only. It uses the shared Supabase project, but only the `kf_` tables.
 
-## 1. Create the tables
+## Deploy order
 
-Open the Supabase SQL editor for the existing project and run **`schema.sql`** from top to bottom.
+Do these in order. The app expects the lock to already be in the database.
 
-That file only creates `kf_*` tables, indexes, row level security policies, and grants. It does not alter or drop anything already in the database. It is safe to run again.
+1. **Fresh database only:** run `schema.sql`, then `supabase/kingfamily_seed.sql`.
+2. **Every database, including the live one:** run `supabase/kingfamily_security.sql` in the Supabase SQL editor. It is safe to run again. It does not rewrite budget, sales, leave, checklist, or kanban rows.
+3. Set the server secret `SUPABASE_SERVICE_ROLE_KEY` (see below).
+4. Deploy the app.
 
-There is no separate Supabase project. King Family Dash reads `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` for the same project, and every query goes to a `kf_` table.
+Do not re-run `supabase/kingfamily_seed.sql` on the live database. Its budget rows were edited there, and the seed overwrites those lines on conflict.
 
-## 2. Load the demo case study
+`schema.sql` only creates `kf_*` tables and missing columns. It does not drop tables or open them to the public anon key. Row access lives in `supabase/kingfamily_security.sql`.
 
-Run **`supabase/kingfamily_seed.sql`** after `schema.sql`. It only writes `kf_` tables and can be run again.
+## Sign-in
 
-The dashboard does not use Supabase Auth. It compares the password to the plain-text `password` column on `kf_users`, which is how the original app logs people in. Every demo account uses the password **kingdemo**.
+Sign-in is Supabase Auth email and password. The security SQL links each existing `kf_users` row to an Auth user. A person who is not linked yet gets a new Auth account with the temporary password **kingdemo**. Accounts that are already linked keep their password.
 
 | Email | Role | Name |
 | --- | --- | --- |
-| adrian.king@kingfamily.demo | admin | Adrian King |
+| king@kingfamily.demo | admin | King |
 | mira.king@kingfamily.demo | supervisor | Mira King |
 | leo.king@kingfamily.demo | staff | Leo King |
 | sable.king@kingfamily.demo | staff | Sable King |
 | nora.king@kingfamily.demo | staff | Nora King |
 
-These people are fictional. Sign in as Adrian to see Budget and Admin.
+After the first sign-in, an admin can set a real password from Admin. The screen never shows the current password.
 
-On the Budget tab for 2026, **Net Profit (Actual YTD)** should read **RM 1,186,400**. That card is closed sales for the year minus COGS, operating expenses, depreciation, loans, and tax installments. November and December are still zero, so the figure is the position through October 2026.
+In the Supabase Auth settings for this project:
 
-## 3. Configure the app
+- Turn off public sign-ups, so strangers cannot create their own login.
+- Email confirmation can stay off. The migration marks the five accounts confirmed, and new accounts created from Admin are confirmed by the server.
+
+Staff can use Dashboard, Scoreboard (their own rows), Leave, Checklist, and Kanban. They cannot open Budget or Admin. Supervisors keep Budget and can manage leave, checklists, and scoreboard rows. Only an admin can open Admin or promote someone to admin.
+
+On the Budget tab for 2026, **Net Profit (Actual YTD)** should read **RM 1,186,400** when the demo seed is the data. That card is closed sales for the year minus COGS, operating expenses, depreciation, loans, and tax installments.
+
+## Configure the app
 
 ```bash
 cp .env.example .env
 ```
 
-Set:
+Browser (public):
 
 - `VITE_SUPABASE_URL` — project URL
-- `VITE_SUPABASE_ANON_KEY` — anon (public) key
+- `VITE_SUPABASE_ANON_KEY` — anon key
 
-Do not commit `.env`. Do not put the service role key in the frontend.
+Server only, for Admin create / password reset / delete (`api/admin-users.js`):
+
+- `SUPABASE_SERVICE_ROLE_KEY` — the Supabase service role key
+
+Never prefix the service role key with `VITE_`. The browser must not receive it. On Vercel, add `SUPABASE_SERVICE_ROLE_KEY` in project settings. The URL can be `SUPABASE_URL` or the existing `VITE_SUPABASE_URL`.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Production build:
+`npm run dev` serves `/api/admin-users` locally. Production is the same file as a Vercel serverless function.
 
 ```bash
+npm test
 npm run build
 ```
 
-On Vercel, set the same two environment variables, use the Vite framework, and Node 24.
-
-## 4. What the demo seed contains
-
-`supabase/kingfamily_seed.sql` fills every table the tabs use: users, leave, integrity checklists, sales targets and entries, budget lines (January–October 2026), month checkmarks, line visibility, budget audit, and a kanban board with history. Documents are built into the app and do not use a table.
-
-`schema.sql` alone leaves an empty kanban board and placeholder sales targets. The seed replaces those. Opening Budget before the seed runs can insert zero-amount lines; running the seed afterwards overwrites them.
+On Vercel, use the Vite framework and Node 24. Deploy only after the security SQL has been applied.
