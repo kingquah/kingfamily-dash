@@ -267,6 +267,10 @@ create trigger kf_rock_archive_stamp
 --    Custom lines stay on the sheet. A custom line in an old section is
 --    moved under Costs so it still rolls into the total. The archive keeps
 --    the section name it had.
+--
+--    supabase/pulse_fresh_start.sql supersedes this block on the live shop.
+--    Once kf_budget_map_applied has line_key '__fresh_start__', the block
+--    returns immediately and does not hide, un-hide, move, or roll any line.
 -- ---------------------------------------------------------------------------
 
 do $map$
@@ -280,6 +284,13 @@ declare
     'revenue', 'cogs', 'labour', 'shipping', 'platform_fees', 'marketing', 'taxes', 'miscellaneous'
   ];
 begin
+  if exists (
+    select 1 from public.kf_budget_map_applied
+    where line_key = '__fresh_start__'
+  ) then
+    return;
+  end if;
+
   insert into public.kf_budget_line_archive (
     year, line_key, monthly_budget, actuals, label, section, hidden, is_custom, mapped_to
   )

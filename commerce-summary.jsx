@@ -3,11 +3,13 @@ import { supabase } from "./supabase.js";
 import {
   COST_KEYS,
   MONTHS,
+  activeMonthIndexes,
+  clampMonthIndex,
   formatRm,
   marginPct,
-  monthKey,
-  monthKeysThrough,
-  monthsThrough,
+  monthKeysInPeriod,
+  monthsInPeriod,
+  periodLabel,
   profitFromBudget,
   rankSkus,
 } from "./commerce-math.js";
@@ -26,30 +28,41 @@ function missingTable(error) {
   );
 }
 
+const ZERO_PROFIT = { revenue: 0, grossProfit: 0, netProfit: 0 };
+
 export function CommerceSummary() {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
-  const [monthIndex, setMonthIndex] = useState(today.getMonth());
+  const [monthIndex, setMonthIndex] = useState(() => clampMonthIndex(today.getFullYear(), today.getMonth()));
   const [span, setSpan] = useState("month");
-  const [profit, setProfit] = useState(null);
+  const [profit, setProfit] = useState(ZERO_PROFIT);
   const [ranked, setRanked] = useState({ top: [], bottom: [] });
   const [notice, setNotice] = useState("");
+  const monthChoices = activeMonthIndexes(year);
+
+  useEffect(() => {
+    const next = clampMonthIndex(year, monthIndex);
+    if (next !== monthIndex) setMonthIndex(next);
+  }, [year, monthIndex]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setNotice("");
-      const months = span === "ytd" ? monthsThrough(monthIndex) : [MONTHS[monthIndex]];
-      const keys = span === "ytd" ? monthKeysThrough(year, monthIndex) : [monthKey(year, monthIndex)];
+      const months = monthsInPeriod(year, monthIndex, span);
+      const keys = monthKeysInPeriod(year, monthIndex, span);
+      const salesQuery = keys.length === 0
+        ? Promise.resolve({ data: [], error: null })
+        : supabase.from("kf_product_sales").select("product_id, month, units_sold, revenue").in("month", keys);
       const [lines, products, sales] = await Promise.all([
         supabase.from("kf_budget_lines").select("line_key, actuals").eq("year", year),
         supabase.from("kf_products").select("id, sku, name, unit_cost, sell_price, active"),
-        supabase.from("kf_product_sales").select("product_id, month, units_sold, revenue").in("month", keys),
+        salesQuery,
       ]);
       if (cancelled) return;
       const failed = [lines, products, sales].find((result) => result.error);
       if (failed) {
-        setProfit(null);
+        setProfit(ZERO_PROFIT);
         setRanked({ top: [], bottom: [] });
         setNotice(
           missingTable(failed.error)
@@ -76,7 +89,7 @@ export function CommerceSummary() {
     };
   }, [year, monthIndex, span]);
 
-  const label = span === "ytd" ? `Jan–${MONTHS[monthIndex]} ${year}` : `${MONTHS[monthIndex]} ${year}`;
+  const label = periodLabel(year, monthIndex, span);
 
   return (
     <section style={{ marginBottom: 28 }}>
@@ -98,16 +111,18 @@ export function CommerceSummary() {
               <option key={value} value={value}>{value}</option>
             ))}
           </select>
-          <select
-            aria-label="Results month"
-            value={monthIndex}
-            onChange={(event) => setMonthIndex(Number(event.target.value))}
-            style={selectStyle}
-          >
-            {MONTHS.map((name, index) => (
-              <option key={name} value={index}>{name}</option>
-            ))}
-          </select>
+          {monthChoices.length > 0 && (
+            <select
+              aria-label="Results month"
+              value={monthIndex}
+              onChange={(event) => setMonthIndex(Number(event.target.value))}
+              style={selectStyle}
+            >
+              {monthChoices.map((index) => (
+                <option key={index} value={index}>{MONTHS[index]}</option>
+              ))}
+            </select>
+          )}
           <select aria-label="Month or year to date" value={span} onChange={(event) => setSpan(event.target.value)} style={selectStyle}>
             <option value="month">This month</option>
             <option value="ytd">Year to date</option>
@@ -133,14 +148,14 @@ export function CommerceSummary() {
 }
 
 function ProfitCard({ title, value, hint }) {
-  const amount = Number(value) || 0;
-  const color = value == null ? "#3a2a1a" : amount < 0 ? "#e74c3c" : "#3a2a1a";
+  const amount = Number(value);
+  const safe = Number.isFinite(amount) ? amount : 0;
   return (
     <div style={card}>
       <div style={{ fontSize: 11, fontWeight: 700, color: "#9a8a7a", textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 6 }}>
         {title}
       </div>
-      <div style={{ fontSize: 22, fontWeight: 800, color }}>{value == null ? "—" : formatRm(amount)}</div>
+      <div style={{ fontSize: 22, fontWeight: 800, color: safe < 0 ? "#e74c3c" : "#3a2a1a" }}>{formatRm(safe)}</div>
       <div style={{ fontSize: 12, color: "#9a8a7a", marginTop: 6 }}>{hint}</div>
     </div>
   );

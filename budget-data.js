@@ -1,7 +1,7 @@
 // Pulse Dashboard — shop budget lines.
-// Monthly amounts here are zero. Historical family-office lines stay in the
-// database. supabase/pulse_ecommerce.sql copies them into these lines and
-// hides the old rows. It does not delete them.
+// Monthly amounts here are zero. The live shop starts fresh on 1 October 2026
+// (BUDGET_START in commerce-math.js). supabase/pulse_fresh_start.sql hides the
+// older lines without deleting them.
 
 import { COST_LINES } from "./commerce-math.js";
 

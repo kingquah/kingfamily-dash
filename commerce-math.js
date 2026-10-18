@@ -30,8 +30,58 @@ export const COST_LINES = [
 
 export const COST_KEYS = COST_LINES.map((line) => line.key);
 
+// Shop budget starts on this date. Earlier months stay out of the sheet and the totals.
+export const BUDGET_START = "2026-10-01";
+
+export function budgetStart() {
+  const [year, month] = BUDGET_START.split("-").map(Number);
+  const monthIndex = month - 1;
+  return { year, monthIndex, monthKey: monthKey(year, monthIndex) };
+}
+
 export function monthKey(year, monthIndex) {
   return `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
+}
+
+export function activeMonthIndexes(year) {
+  const start = budgetStart();
+  if (!Number.isFinite(year) || year < start.year) return [];
+  if (year > start.year) return MONTHS.map((_, index) => index);
+  return MONTHS.map((_, index) => index).filter((index) => index >= start.monthIndex);
+}
+
+export function activeMonths(year) {
+  return activeMonthIndexes(year).map((index) => MONTHS[index]);
+}
+
+export function clampMonthIndex(year, monthIndex) {
+  const active = activeMonthIndexes(year);
+  if (active.length === 0) return 0;
+  if (active.includes(monthIndex)) return monthIndex;
+  return active[0];
+}
+
+export function monthsInPeriod(year, monthIndex, span) {
+  const active = activeMonthIndexes(year);
+  const chosen = span === "month"
+    ? active.filter((index) => index === monthIndex)
+    : active.filter((index) => index <= monthIndex);
+  return chosen.map((index) => MONTHS[index]);
+}
+
+export function monthKeysInPeriod(year, monthIndex, span) {
+  const active = activeMonthIndexes(year);
+  const chosen = span === "month"
+    ? active.filter((index) => index === monthIndex)
+    : active.filter((index) => index <= monthIndex);
+  return chosen.map((index) => monthKey(year, index));
+}
+
+export function periodLabel(year, monthIndex, span) {
+  const months = monthsInPeriod(year, monthIndex, span);
+  if (months.length === 0) return "Budget starts 1 October 2026";
+  if (months.length === 1) return `${months[0]} ${year}`;
+  return `${months[0]}–${months[months.length - 1]} ${year}`;
 }
 
 export function monthsThrough(monthIndex) {
@@ -72,7 +122,7 @@ export function isLowStock(product) {
 }
 
 export function sumActuals(actuals, months) {
-  if (!actuals) return 0;
+  if (!actuals || !Array.isArray(months)) return 0;
   return months.reduce((sum, month) => sum + (Number(actuals[month]) || 0), 0);
 }
 

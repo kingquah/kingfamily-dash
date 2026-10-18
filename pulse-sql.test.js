@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const sql = readFileSync(new URL("./supabase/pulse_ecommerce.sql", import.meta.url), "utf8");
+const fresh = readFileSync(new URL("./supabase/pulse_fresh_start.sql", import.meta.url), "utf8");
 const seed = readFileSync(new URL("./supabase/pulse_ecommerce_seed.sql", import.meta.url), "utf8");
 const app = [
   readFileSync(new URL("./kingfamily-dash.js", import.meta.url), "utf8"),
@@ -19,6 +20,7 @@ function activeSql(source) {
 }
 
 const active = activeSql(sql);
+const freshActive = activeSql(fresh);
 const seedActive = activeSql(seed);
 
 const ORIGINAL_TABLES = [
@@ -204,6 +206,53 @@ test("demo seed only inserts sample products and rocks", () => {
       name,
     );
   }
+});
+
+test("fresh start archives the current lines and blocks a later remap", () => {
+  const math = readFileSync(new URL("./commerce-math.js", import.meta.url), "utf8");
+  assert.doesNotMatch(freshActive, /\bdrop\s+table\b/i);
+  assert.doesNotMatch(freshActive, /\bdelete\s+from\b/i);
+  assert.doesNotMatch(freshActive, /\bto anon\b/i);
+  assert.doesNotMatch(freshActive, /using\s*\(\s*true\s*\)/i);
+  assert.doesNotMatch(fresh, /kf_checklist/);
+  for (const ref of freshActive.match(/public\.\w+/g) || []) {
+    assert.match(ref, /^public\.kf_/, ref);
+  }
+  for (const name of ORIGINAL_TABLES) {
+    assert.doesNotMatch(
+      freshActive,
+      new RegExp(`\\b(table|policy|into|from|update|join|on)\\s+(public\\.)?${name}\\b`, "i"),
+      name,
+    );
+  }
+  assert.match(freshActive, /insert into public\.kf_budget_line_archive/i);
+  assert.match(freshActive, /on conflict \(year, line_key\) do nothing/i);
+  assert.match(freshActive, /set hidden = true/);
+  assert.match(freshActive, /line_key <> all \(shop_keys\)/);
+  for (const key of [
+    "revenue",
+    "cogs",
+    "labour",
+    "shipping",
+    "platform_fees",
+    "marketing",
+    "taxes",
+    "miscellaneous",
+  ]) {
+    assert.match(fresh, new RegExp(`'${key}'`), key);
+  }
+  assert.ok(fresh.includes("Labour (Levi)"), "Labour (Levi)");
+  assert.match(fresh, /\(2026\), \(2027\)/);
+  assert.match(freshActive, /monthly_budget = 0/);
+  assert.match(freshActive, /'\{\}'::jsonb/);
+  assert.match(fresh, /'__fresh_start__'/);
+  assert.match(
+    active,
+    /if exists \(\s*select 1 from public\.kf_budget_map_applied\s*where line_key = '__fresh_start__'\s*\) then\s*return;/,
+  );
+  assert.match(math, /BUDGET_START = "2026-10-01"/);
+  assert.match(app, /activeMonths\(/);
+  assert.match(app, /monthsInPeriod\(/);
 });
 
 test("the app reads shop tables and drops Checklist from the nav", () => {

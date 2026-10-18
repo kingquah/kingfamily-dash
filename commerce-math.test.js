@@ -2,10 +2,17 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { BUDGET_STRUCTURE } from "./budget-data.js";
 import {
+  BUDGET_START,
+  activeMonths,
+  clampMonthIndex,
+  formatRm,
   isLowStock,
   marginPct,
+  monthKeysInPeriod,
   monthKeysThrough,
+  monthsInPeriod,
   monthsThrough,
+  periodLabel,
   profitFromBudget,
   rankSkus,
   skuCogs,
@@ -122,6 +129,61 @@ test("top and bottom SKUs are ranked by margin for the month and year to date", 
   assert.equal(ytd.rows.find((row) => row.sku === "E").margin, 9);
   assert.equal(ytd.top[0].sku, "A");
   assert.equal(ytd.bottom[0].sku, "C");
+});
+
+test("budget months and year-to-date start in October 2026", () => {
+  assert.equal(BUDGET_START, "2026-10-01");
+  assert.deepEqual(activeMonths(2025), []);
+  assert.deepEqual(activeMonths(2026), ["Oct", "Nov", "Dec"]);
+  assert.equal(activeMonths(2027).length, 12);
+  assert.equal(activeMonths(2027)[0], "Jan");
+  assert.equal(clampMonthIndex(2026, 0), 9);
+  assert.equal(clampMonthIndex(2026, 10), 10);
+  assert.equal(clampMonthIndex(2025, 3), 0);
+  assert.deepEqual(monthsInPeriod(2026, 9, "ytd"), ["Oct"]);
+  assert.deepEqual(monthsInPeriod(2026, 11, "ytd"), ["Oct", "Nov", "Dec"]);
+  assert.deepEqual(monthsInPeriod(2026, 2, "ytd"), []);
+  assert.deepEqual(monthsInPeriod(2026, 8, "month"), []);
+  assert.deepEqual(monthsInPeriod(2026, 9, "month"), ["Oct"]);
+  assert.deepEqual(monthsInPeriod(2027, 1, "ytd"), ["Jan", "Feb"]);
+  assert.deepEqual(monthKeysInPeriod(2026, 9, "ytd"), ["2026-10"]);
+  assert.equal(periodLabel(2026, 11, "ytd"), "Oct–Dec 2026");
+  assert.equal(periodLabel(2026, 2, "ytd"), "Budget starts 1 October 2026");
+
+  const actuals = {
+    revenueActuals: { Jan: 50, Sep: 999, Oct: 100 },
+    costActuals: {
+      cogs: { Sep: 400, Oct: 40 },
+      labour: { Oct: 10 },
+      shipping: { Sep: 80 },
+      platform_fees: {},
+      marketing: {},
+      taxes: {},
+      miscellaneous: {},
+    },
+  };
+  const october = profitFromBudget({
+    ...actuals,
+    months: monthsInPeriod(2026, 9, "ytd"),
+  });
+  assert.equal(october.revenue, 100);
+  assert.equal(october.cogs, 40);
+  assert.equal(october.grossProfit, 60);
+  assert.equal(october.netProfit, 50);
+  assert.equal(Number.isNaN(october.netProfit), false);
+
+  const beforeStart = profitFromBudget({
+    revenueActuals: { Jan: 50, Sep: 999 },
+    costActuals: {},
+    months: monthsInPeriod(2026, 8, "ytd"),
+  });
+  assert.equal(beforeStart.revenue, 0);
+  assert.equal(beforeStart.grossProfit, 0);
+  assert.equal(beforeStart.netProfit, 0);
+  assert.equal(formatRm(undefined), "RM 0");
+  assert.equal(formatRm(NaN), "RM 0");
+  assert.equal(formatRm(beforeStart.netProfit), "RM 0");
+  assert.equal(formatRm(beforeStart.grossProfit), "RM 0");
 });
 
 test("low stock means on-hand stock is at or under the reorder level", () => {
