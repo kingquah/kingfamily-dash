@@ -1,7 +1,62 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { BUDGET_STRUCTURE } from "./budget-data.js";
+const LEGACY_COST_KEYS = [
+  "total_cogs",
+  "payroll_my",
+  "payroll_sg",
+  "epf_cpf",
+  "socso",
+  "eis",
+  "sdl_sg",
+  "incentive",
+  "rental",
+  "sinking_fund",
+  "maintenance",
+  "delivery",
+  "samples",
+  "company_trip",
+  "sponsorships",
+  "team_bonus",
+  "entertainment",
+  "fin_perfectaim",
+  "fin_sg",
+  "secretary",
+  "cosec_sg",
+  "filing",
+  "tax_agent",
+  "audit",
+  "stripe",
+  "digital_mkt",
+  "ads_spend",
+  "mkt_materials",
+  "tech_dev",
+  "cleaning",
+  "misc_prof",
+  "sub_google",
+  "sub_chatgpt",
+  "sub_octopus",
+  "sub_canva",
+  "sub_other",
+  "sub_hosting",
+  "sub_systeme",
+  "sub_misc",
+  "util_electric",
+  "util_water",
+  "util_internet",
+  "util_phone",
+  "off_stationery",
+  "off_pantry",
+  "off_it",
+  "off_furniture",
+  "veh_insurance",
+  "veh_service",
+  "depreciation",
+  "loan_proton",
+  "loan_denza",
+  "loan_maybank",
+  "cp204",
+];
 
 const sql = readFileSync(new URL("./supabase/kingfamily_seed.sql", import.meta.url), "utf8");
 const active = sql
@@ -22,16 +77,6 @@ const ORIGINAL_TABLES = [
   "kanban_audit",
   "users",
 ];
-
-function expand(key, byKey, seen = new Set()) {
-  if (seen.has(key)) return [];
-  seen.add(key);
-  const line = byKey[key];
-  if (!line) throw new Error(`missing budget key ${key}`);
-  if (line.kind === "input") return [key];
-  if (line.members) return line.members.flatMap((member) => expand(member, byKey, seen));
-  return [];
-}
 
 test("seed only writes kf_ tables and is re-runnable", () => {
   assert.match(sql, /EXPECTED_NET_PROFIT_ACTUAL_YTD:\s*1186400/);
@@ -67,10 +112,7 @@ test("seed creates King and does not store a password", () => {
 });
 
 test("Net Profit (Actual YTD) is RM 1,186,400", () => {
-  const byKey = Object.fromEntries(
-    BUDGET_STRUCTURE.filter((line) => line.key).map((line) => [line.key, line])
-  );
-  const costKeys = byKey.net_profit.deduct.flatMap((key) => expand(key, byKey));
+  const costKeys = LEGACY_COST_KEYS;
   assert.equal(new Set(costKeys).size, costKeys.length);
 
   const closed = [...sql.matchAll(/'sales_closed',\s*'[^']*',\s*(\d+)::numeric/g)]

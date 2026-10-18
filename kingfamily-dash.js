@@ -12,6 +12,10 @@ import {
   sectionSubtotal as q2,
   labelByKey as Oh,
 } from "./budget-data.js";
+import { activeMonths, formatRm } from "./commerce-math.js";
+import { CommerceSummary } from "./commerce-summary.jsx";
+import { ProductsPage } from "./products-view.jsx";
+import { RocksPage } from "./rocks-view.jsx";
 
 const oe = React;
 const f = { jsx, jsxs, Fragment };
@@ -2706,9 +2710,10 @@ function J3() {
   const N = [
     { id: "dashboard", label: "Dashboard", icon: "🏠" },
     ...(v ? [{ id: "budget", label: "Budget", icon: "📒" }] : []),
+    { id: "products", label: "Products", icon: "📦" },
     { id: "scoreboard", label: "Scoreboard", icon: "🏆" },
     { id: "leave", label: "Leave", icon: "🌴" },
-    { id: "checklist", label: "Checklist", icon: "✅" },
+    { id: "rocks", label: "Rocks", icon: "🪨" },
     { id: "kanban", label: "Kanban", icon: "🗂️" },
     { id: "docs", label: "Documents", icon: "📁" },
   ];
@@ -2883,13 +2888,13 @@ function J3() {
               isAdmin: v,
               onLeaveAction: O,
             }),
-          r === "checklist" &&
-            f.jsx(tC, {
+          r === "products" &&
+            f.jsx(ProductsPage, { isManager: v }),
+          r === "rocks" &&
+            f.jsx(RocksPage, {
               currentUser: e,
               users: i,
-              checklists: h,
-              setChecklists: d,
-              isAdmin: v,
+              isManager: v,
             }),
           r === "sales" && f.jsx(sC, { sales: x, setSales: u, isAdmin: v }),
           r === "budget" &&
@@ -3214,6 +3219,7 @@ function Z3({
           }),
         ],
       }),
+      f.jsx(CommerceSummary, {}),
       f.jsxs("div", {
         style: { marginBottom: 32 },
         children: [
@@ -6463,8 +6469,9 @@ function aC(e) {
   }
   return (i(), r);
 }
-function oC(e, t, r) {
-  const n = Object.entries(e)
+function oC(e, t, r, months) {
+  const cols = Array.isArray(months) ? months : kt,
+    n = Object.entries(e)
       .filter(([, l]) => l.is_custom)
       .map(([l, u]) => ({
         line_key: l,
@@ -6484,8 +6491,8 @@ function oC(e, t, r) {
     if (l.kind === "input") {
       const u = e[l.key] || {},
         c = { ...Hn(), ...(u.actuals || {}) };
-      if (l.autoActual && t) for (const m of kt) c[m] = t[m] || 0;
-      const p = kt.reduce((m, g) => m + (Number(c[g]) || 0), 0),
+      if (l.autoActual && t) for (const m of cols) c[m] = t[m] || 0;
+      const p = cols.reduce((m, g) => m + (Number(c[g]) || 0), 0),
         h = { budget: Number(u.monthly_budget) || 0, actuals: c, total: p },
         d = u.label || l.label;
       if (u.hidden) {
@@ -6504,9 +6511,9 @@ function oC(e, t, r) {
       let p = 0;
       for (const m of u) {
         p += a(m).budget;
-        for (const g of kt) c[g] += a(m).actuals[g];
+        for (const g of cols) c[g] += a(m).actuals[g] || 0;
       }
-      const h = kt.reduce((m, g) => m + c[g], 0),
+      const h = cols.reduce((m, g) => m + c[g], 0),
         d = { budget: p, actuals: c, total: h };
       ((s[l.key] = d), o.push({ ...l, ...d }));
       continue;
@@ -6516,13 +6523,13 @@ function oC(e, t, r) {
       let c = 0;
       for (const d of l.income) {
         c += a(d).budget;
-        for (const m of kt) u[m] += a(d).actuals[m];
+        for (const m of cols) u[m] += a(d).actuals[m] || 0;
       }
       for (const d of l.deduct) {
         c -= a(d).budget;
-        for (const m of kt) u[m] -= a(d).actuals[m];
+        for (const m of cols) u[m] -= a(d).actuals[m] || 0;
       }
-      const p = kt.reduce((d, m) => d + u[m], 0),
+      const p = cols.reduce((d, m) => d + u[m], 0),
         h = { budget: c, actuals: u, total: p };
       ((s[l.key] = h), o.push({ ...l, ...h }));
       continue;
@@ -6531,7 +6538,7 @@ function oC(e, t, r) {
       const u = a(l.net),
         c = a(l.base),
         p = {};
-      for (const h of kt)
+      for (const h of cols)
         p[h] = c.actuals[h] ? (u.actuals[h] / c.actuals[h]) * 100 : 0;
       o.push({ ...l, pct: p, total: c.total ? (u.total / c.total) * 100 : 0 });
       continue;
@@ -6586,6 +6593,7 @@ function uC({ currentUser: e, salesEntries: t, isEditor: r }) {
     [I, B] = oe.useState(!0),
     [ne, le] = oe.useState(!0),
     [budgetNotice, setBudgetNotice] = oe.useState("");
+  const sheetMonths = activeMonths(i);
   async function C() {
     g(!0);
     const [L, ge, we, Oe] = await Promise.all([
@@ -6684,10 +6692,14 @@ function uC({ currentUser: e, salesEntries: t, isEditor: r }) {
       }
       return L;
     }, [t, i]),
-    F = oC(a, P, r && z),
+    F = oC(a, P, r && z, sheetMonths),
     J = r ? F : lC(F, c),
     M = F.find((L) => L.key === "net_profit") || { total: 0 },
-    X = Object.values(a).filter((L) => L.hidden).length,
+    X = Object.entries(a).filter(([key, row]) => {
+      if (!row.hidden) return false;
+      if (Eu.some((line) => line.key === key)) return true;
+      return row.is_custom && (row.section === "Costs" || row.section === "Revenue");
+    }).length,
     K = (L) => {
       var ge;
       return ((ge = a[L]) == null ? void 0 : ge.label) || Oh[L] || L;
@@ -6940,7 +6952,7 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
       ge = [
         "Line Item",
         "Monthly Budgeted",
-        ...kt.map((Fe) => `${Fe}-${String(i).slice(2)}`),
+        ...sheetMonths.map((Fe) => `${Fe}-${String(i).slice(2)}`),
         "Total",
       ],
       we = [[`Pulse Dashboard Budget ${i}`], [], ge];
@@ -6953,7 +6965,7 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
         we.push([
           Fe.label,
           "",
-          ...kt.map((pt) => (Fe.pct[pt] ? L(Fe.pct[pt]) : 0)),
+          ...sheetMonths.map((pt) => (Fe.pct[pt] ? L(Fe.pct[pt]) : 0)),
           Fe.total ? L(Fe.total) : 0,
         ]);
         continue;
@@ -6961,20 +6973,20 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
       we.push([
         Fe.label,
         L(Fe.budget),
-        ...kt.map((pt) => L(Fe.actuals[pt])),
+        ...sheetMonths.map((pt) => L(Fe.actuals[pt])),
         L(Fe.total),
       ]);
     }
     (we.push([]),
       we.push([
         "Months checked & good:",
-        kt.filter((Fe) => l[Fe]).join(", ") || "none",
+        sheetMonths.filter((Fe) => l[Fe]).join(", ") || "none",
       ]));
     const Oe = Ec.aoa_to_sheet(we);
     Oe["!cols"] = [
       { wch: 42 },
       { wch: 16 },
-      ...kt.map(() => ({ wch: 12 })),
+      ...sheetMonths.map(() => ({ wch: 12 })),
       { wch: 14 },
     ];
     const Me = Ec.book_new();
@@ -7024,10 +7036,12 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
         }),
       ],
     });
-  const Fn = 78,
+  const legacyUnmapped = !!a.total_sales && !a.revenue,
+    Fn = 78,
     en = 96,
     Qt = 230,
     li = 104,
+    spanCols = 3 + sheetMonths.length,
     Cr = "7px 8px",
     zi = "#f7f1ea",
     Rr = (L = {}) => ({
@@ -7045,6 +7059,20 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
   return f.jsxs("div", {
     children: [
       f.jsx(Notice, { text: budgetNotice }),
+      legacyUnmapped &&
+        f.jsx("div", {
+          style: {
+            background: "#fff8ee",
+            border: "1px solid #f0dcc0",
+            color: "#8a6a3a",
+            borderRadius: 10,
+            padding: "10px 14px",
+            fontSize: 13,
+            marginBottom: 12,
+          },
+          children:
+            "This year still uses the old budget lines. Run supabase/pulse_ecommerce.sql once to copy them into Revenue and the seven cost lines. Nothing is deleted.",
+        }),
       f.jsxs("div", {
         style: {
           display: "flex",
@@ -7268,11 +7296,24 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
       f.jsxs("p", {
         style: { color: "#9a8a7a", fontSize: 13, marginBottom: 16 },
         children: [
-          "Monthly Budgeted target vs actuals per month, with live Net Profit (RM).",
+          "Monthly Budgeted target vs actuals per month, with live Net Profit (RM). Months before 1 October 2026 are left off the sheet and out of the totals.",
           " ",
           "Click any cell to edit · click a month header to mark it checked/good · 🗑 remove a line · ➕ add a line.",
         ],
       }),
+      sheetMonths.length === 0 &&
+        f.jsx("div", {
+          style: {
+            background: "#fff8ee",
+            border: "1px solid #f0dcc0",
+            color: "#8a6a3a",
+            borderRadius: 10,
+            padding: "10px 14px",
+            fontSize: 13,
+            marginBottom: 12,
+          },
+          children: `${i} is before the shop budget. The sheet starts on 1 October 2026, and this year adds nothing to the totals.`,
+        }),
       r &&
         (!I || !ne) &&
         f.jsxs("div", {
@@ -7350,7 +7391,7 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
                   fontWeight: 800,
                   color: M.total >= 0 ? "#2ecc71" : "#e74c3c",
                 },
-                children: ["RM ", Ji(M.total)],
+                children: formatRm(M.total),
               }),
               f.jsx("div", {
                 style: {
@@ -7363,7 +7404,7 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
                   letterSpacing: 0,
                 },
                 children:
-                  "Closed sales, minus costs, depreciation, loan payments, and tax installments.",
+                  "Revenue, minus cost of goods, labour, shipping, platform fees, marketing, taxes, and miscellaneous.",
               }),
             ],
           }),
@@ -7388,7 +7429,7 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
               }),
               f.jsxs("div", {
                 style: { fontSize: 22, fontWeight: 800, color: "#6B3FA0" },
-                children: [kt.filter((L) => l[L]).length, " / 12"],
+                children: [sheetMonths.filter((L) => l[L]).length, " / ", sheetMonths.length],
               }),
             ],
           }),
@@ -7406,7 +7447,7 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
             borderCollapse: "collapse",
             fontSize: 12,
             width: "100%",
-            minWidth: Qt + en + Fn * 12 + li,
+            minWidth: Qt + en + Fn * sheetMonths.length + li,
           },
           children: [
             f.jsx("thead", {
@@ -7437,7 +7478,7 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
                     },
                     children: ["MONTHLY", f.jsx("br", {}), "BUDGETED"],
                   }),
-                  kt.map((L) =>
+                  sheetMonths.map((L) =>
                     f.jsxs(
                       "th",
                       {
@@ -7491,7 +7532,7 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
                 J.length === 0 &&
                   f.jsx("tr", {
                     children: f.jsx("td", {
-                      colSpan: 15,
+                      colSpan: spanCols,
                       style: {
                         padding: "30px",
                         textAlign: "center",
@@ -7507,7 +7548,7 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
                       "tr",
                       {
                         children: f.jsx("td", {
-                          colSpan: 15,
+                          colSpan: spanCols,
                           style: {
                             ...Rr({ padding: "14px 8px 5px" }),
                             fontSize: 13,
@@ -7526,7 +7567,7 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
                       "tr",
                       {
                         children: f.jsx("td", {
-                          colSpan: 15,
+                          colSpan: spanCols,
                           style: {
                             ...Rr({ padding: "9px 8px 3px" }),
                             fontSize: 12,
@@ -7702,7 +7743,7 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
                                 ? ""
                                 : Ji(L.budget),
                         }),
-                        kt.map((ze) => {
+                        sheetMonths.map((ze) => {
                           const ar = L.autoActual,
                             it = r && !we && !ar,
                             So = `${L.key}:${ze}`,

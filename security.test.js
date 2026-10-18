@@ -141,7 +141,9 @@ test("the app signs in with Supabase Auth and does not ship the old shortcuts", 
   assert.match(shell, /getSession/);
   assert.match(shell, /if \(!session\) return/);
   assert.match(shell, /id: "leave"/);
-  assert.match(shell, /id: "checklist"/);
+  assert.match(shell, /id: "products"/);
+  assert.match(shell, /id: "rocks"/);
+  assert.doesNotMatch(shell, /id: "checklist"/);
   assert.match(shell, /e\.role === "admin"/);
   assert.doesNotMatch(app, /disable row level security/i);
   assert.doesNotMatch(app, /kingdemo/);
@@ -149,7 +151,7 @@ test("the app signs in with Supabase Auth and does not ship the old shortcuts", 
   assert.doesNotMatch(app, /\bi === ["']admin["']/);
   assert.doesNotMatch(app, /SERVICE_ROLE/);
   assert.doesNotMatch(app, /service_role/);
-  assert.match(app, /Closed sales, minus costs, depreciation, loan payments, and tax installments\./);
+  assert.match(app, /Revenue, minus cost of goods, labour, shipping, platform fees, marketing, taxes, and miscellaneous\./);
   assert.match(app, /PulseDashboardScoreboard\.xlsx/);
   assert.match(app, /Own store/);
   assert.match(app, /TikTok Shop/);
