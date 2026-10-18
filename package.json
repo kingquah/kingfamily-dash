@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test table-names.test.js demo-seed.test.js security.test.js"
+    "test": "node --test table-names.test.js demo-seed.test.js security.test.js commerce-math.test.js pulse-sql.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.99.0",

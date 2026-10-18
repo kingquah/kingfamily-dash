@@ -12,6 +12,9 @@ import {
   sectionSubtotal as q2,
   labelByKey as Oh,
 } from "./budget-data.js";
+import { CommerceSummary } from "./commerce-summary.jsx";
+import { ProductsPage } from "./products-view.jsx";
+import { RocksPage } from "./rocks-view.jsx";
 
 const oe = React;
 const f = { jsx, jsxs, Fragment };
@@ -2706,9 +2709,10 @@ function J3() {
   const N = [
     { id: "dashboard", label: "Dashboard", icon: "🏠" },
     ...(v ? [{ id: "budget", label: "Budget", icon: "📒" }] : []),
+    { id: "products", label: "Products", icon: "📦" },
     { id: "scoreboard", label: "Scoreboard", icon: "🏆" },
     { id: "leave", label: "Leave", icon: "🌴" },
-    { id: "checklist", label: "Checklist", icon: "✅" },
+    { id: "rocks", label: "Rocks", icon: "🪨" },
     { id: "kanban", label: "Kanban", icon: "🗂️" },
     { id: "docs", label: "Documents", icon: "📁" },
   ];
@@ -2883,13 +2887,13 @@ function J3() {
               isAdmin: v,
               onLeaveAction: O,
             }),
-          r === "checklist" &&
-            f.jsx(tC, {
+          r === "products" &&
+            f.jsx(ProductsPage, { isManager: v }),
+          r === "rocks" &&
+            f.jsx(RocksPage, {
               currentUser: e,
               users: i,
-              checklists: h,
-              setChecklists: d,
-              isAdmin: v,
+              isManager: v,
             }),
           r === "sales" && f.jsx(sC, { sales: x, setSales: u, isAdmin: v }),
           r === "budget" &&
@@ -3214,6 +3218,7 @@ function Z3({
           }),
         ],
       }),
+      f.jsx(CommerceSummary, {}),
       f.jsxs("div", {
         style: { marginBottom: 32 },
         children: [
@@ -6687,7 +6692,11 @@ function uC({ currentUser: e, salesEntries: t, isEditor: r }) {
     F = oC(a, P, r && z),
     J = r ? F : lC(F, c),
     M = F.find((L) => L.key === "net_profit") || { total: 0 },
-    X = Object.values(a).filter((L) => L.hidden).length,
+    X = Object.entries(a).filter(([key, row]) => {
+      if (!row.hidden) return false;
+      if (Eu.some((line) => line.key === key)) return true;
+      return row.is_custom && (row.section === "Costs" || row.section === "Revenue");
+    }).length,
     K = (L) => {
       var ge;
       return ((ge = a[L]) == null ? void 0 : ge.label) || Oh[L] || L;
@@ -7024,7 +7033,8 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
         }),
       ],
     });
-  const Fn = 78,
+  const legacyUnmapped = !!a.total_sales && !a.revenue,
+    Fn = 78,
     en = 96,
     Qt = 230,
     li = 104,
@@ -7045,6 +7055,20 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
   return f.jsxs("div", {
     children: [
       f.jsx(Notice, { text: budgetNotice }),
+      legacyUnmapped &&
+        f.jsx("div", {
+          style: {
+            background: "#fff8ee",
+            border: "1px solid #f0dcc0",
+            color: "#8a6a3a",
+            borderRadius: 10,
+            padding: "10px 14px",
+            fontSize: 13,
+            marginBottom: 12,
+          },
+          children:
+            "This year still uses the old budget lines. Run supabase/pulse_ecommerce.sql once to copy them into Revenue and the seven cost lines. Nothing is deleted.",
+        }),
       f.jsxs("div", {
         style: {
           display: "flex",
@@ -7363,7 +7387,7 @@ It will be excluded from all totals. You can restore it anytime via "Show archiv
                   letterSpacing: 0,
                 },
                 children:
-                  "Closed sales, minus costs, depreciation, loan payments, and tax installments.",
+                  "Revenue, minus cost of goods, labour, shipping, platform fees, marketing, taxes, and miscellaneous.",
               }),
             ],
           }),
